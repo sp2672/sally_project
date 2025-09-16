@@ -54,24 +54,56 @@ def load_trained_model(model_path: str, model_name: str, device: torch.device):
     return model
 
 
-def evaluate_model(model, test_loader, device, model_name: str):
-    """Evaluate model on test set"""
+def create_subset_loader(test_loader, max_samples: int):
+    """Create a subset of the test loader for quick testing"""
+    subset_data = []
+    sample_count = 0
+    
+    for inputs, labels in test_loader:
+        subset_data.append((inputs, labels))
+        sample_count += inputs.size(0)  # batch size
+        
+        if sample_count >= max_samples:
+            break
+    
+    return subset_data
+
+
+def evaluate_model(model, test_loader, device, model_name: str, max_samples=None):
+    """Evaluate model on test set (or subset)"""
     print(f"\nEvaluating {model_name} on test set...")
-    print(f"Test batches: {len(test_loader)}")
+    
+    # Create subset if requested
+    if max_samples:
+        print(f"Using subset of {max_samples} samples for quick testing")
+        test_data = create_subset_loader(test_loader, max_samples)
+        print(f"Test batches: {len(test_data)}")
+    else:
+        test_data = test_loader
+        print(f"Test batches: {len(test_loader)}")
     
     # Initialize metrics
     metrics = BurnSeverityMetrics(num_classes=Config.NUM_CLASSES)
     
     # Evaluation loop
     with torch.no_grad():
-        for batch_idx, (inputs, labels) in enumerate(test_loader):
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = model(inputs)
-            metrics.update(outputs, labels)
-            
-            # Progress indicator
-            if (batch_idx + 1) % max(1, len(test_loader) // 10) == 0:
-                print(f"Progress: {batch_idx + 1}/{len(test_loader)} batches")
+        if max_samples:
+            # Subset evaluation
+            for batch_idx, (inputs, labels) in enumerate(test_data):
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = model(inputs)
+                metrics.update(outputs, labels)
+                print(f"Progress: {batch_idx + 1}/{len(test_data)} batches")
+        else:
+            # Full evaluation
+            for batch_idx, (inputs, labels) in enumerate(test_data):
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = model(inputs)
+                metrics.update(outputs, labels)
+                
+                # Progress indicator
+                if (batch_idx + 1) % max(1, len(test_data) // 10) == 0:
+                    print(f"Progress: {batch_idx + 1}/{len(test_data)} batches")
     
     # Compute final metrics
     results = metrics.compute_all_metrics()
@@ -135,6 +167,8 @@ def main():
     parser.add_argument('--model_name', type=str, required=True,
                         choices=['unet', 'resunet', 'attentionunet'],
                         help='Model architecture name')
+    parser.add_argument('--max_samples', type=int, default=None,
+                        help='Maximum number of samples to test (for quick testing)')
     parser.add_argument('--save_plots', action='store_true',
                         help='Save evaluation plots')
     parser.add_argument('--save_results', action='store_true', 
@@ -153,11 +187,18 @@ def main():
         batch_size=Config.BATCH_SIZE,
     )
     
+    if len(test_loader) == 0:
+        print("No test data available! Using validation data instead...")
+        _, test_loader, _ = create_data_loaders(
+            dataset_path=Config.DATASET_PATH,
+            batch_size=Config.BATCH_SIZE,
+        )
+    
     # Load trained model
     model = load_trained_model(args.model_path, args.model_name, device)
     
-    # Evaluate model
-    results, metrics = evaluate_model(model, test_loader, device, args.model_name)
+    # Evaluate model (with optional subset)
+    results, metrics = evaluate_model(model, test_loader, device, args.model_name, args.max_samples)
     
     # Print results
     print_detailed_results(results, args.model_name)
