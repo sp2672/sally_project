@@ -48,8 +48,63 @@ class Config:
     @classmethod
     def get_class_weights(cls):
         """Return class weights for loss function"""
-        # Option 1: No class weights
         return None
         
-        # Option 2: Use predefined weights (uncomment to use)
-        # return torch.tensor([0.1, 1.0, 2.0, 3.0, 2.0], dtype=torch.float32)
+    @classmethod
+    def validate(cls):
+        """Validate configuration parameters"""
+        errors = []
+        
+        # Check required paths
+        if not Path(cls.DATASET_PATH).exists():
+            errors.append(f"Dataset path does not exist: {cls.DATASET_PATH}")
+            
+        # Check numeric parameters
+        if cls.BATCH_SIZE <= 0:
+            errors.append(f"BATCH_SIZE must be positive, got {cls.BATCH_SIZE}")
+            
+        if cls.NUM_EPOCHS <= 0:
+            errors.append(f"NUM_EPOCHS must be positive, got {cls.NUM_EPOCHS}")
+            
+        if cls.LR <= 0:
+            errors.append(f"Learning rate must be positive, got {cls.LR}")
+            
+        # Check valid options
+        valid_models = ["unet", "resunet", "attentionunet"]
+        if cls.MODEL_NAME.lower() not in valid_models:
+            errors.append(f"MODEL_NAME must be one of {valid_models}, got {cls.MODEL_NAME}")
+            
+        valid_losses = ["ce", "focal", "ohem", "combined"]
+        if cls.LOSS_TYPE.lower() not in valid_losses:
+            errors.append(f"LOSS_TYPE must be one of {valid_losses}, got {cls.LOSS_TYPE}")
+            
+        valid_optimizers = ["adam", "sgd"]
+        if cls.OPTIMIZER.lower() not in valid_optimizers:
+            errors.append(f"OPTIMIZER must be one of {valid_optimizers}, got {cls.OPTIMIZER}")
+            
+        # Warnings for potentially problematic values
+        if cls.BATCH_SIZE > 32:
+            warnings.warn(f"Large batch size {cls.BATCH_SIZE} may cause memory issues")
+            
+        if cls.LR > 1e-2:
+            warnings.warn(f"High learning rate {cls.LR} may cause training instability")
+            
+        if errors:
+            raise ValueError(f"Configuration errors:\n" + "\n".join(errors))
+            
+        return True
+        
+    @classmethod
+    def print_config(cls):
+        """Print current configuration"""
+        print("Configuration:")
+        print("=" * 40)
+        print(f"Device: {cls.DEVICE}")
+        print(f"Model: {cls.MODEL_NAME}")
+        print(f"Loss: {cls.LOSS_TYPE}")
+        print(f"Batch size: {cls.BATCH_SIZE}")
+        print(f"Epochs: {cls.NUM_EPOCHS}")
+        print(f"Learning rate: {cls.LR}")
+        print(f"Optimizer: {cls.OPTIMIZER}")
+        print(f"Dataset: {cls.DATASET_PATH}")
+        print("=" * 40)
