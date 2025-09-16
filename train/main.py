@@ -4,19 +4,18 @@ import sys
 from pathlib import Path
 
 # Add project subdirectories to Python path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root / "preprocessing"))
 sys.path.append(str(project_root / "model_architecture"))
 sys.path.append(str(project_root / "metrics"))
 sys.path.append(str(project_root / "utils"))
 sys.path.append(str(project_root / "config"))
-sys.path.append(str(project_root / "train"))
 
 from dataloader import create_data_loaders
 from trainer import Trainer
-from train_utils import plot_training_curves, plot_precision_recall, plot_confusion_matrix
-from evaluation_metrics import BurnSeverityMetrics
-from loss_functions import LossFunctionFactory
+from utils.train_utils import plot_training_curves
+from metrics.evaluation_metrics import BurnSeverityMetrics
+from metrics.loss_functions import LossFunctionFactory
 
 # Import models
 from unet import UNet
@@ -25,7 +24,7 @@ from attentionUnet import AttentionUNet
 
 # Config + seed
 from config.config import Config
-from seed_utils import set_seed
+from utils.seed_utils import set_seed
 
 
 def get_model(name: str, num_classes: int):
@@ -48,14 +47,16 @@ def main():
     device = Config.DEVICE
     print(f"Using device: {device}")
 
-    # Data
-    train_loader, val_loader, test_loader = create_data_loaders(
+    # Data - only need train and validation for training
+    train_loader, val_loader, _ = create_data_loaders(
         dataset_path=Config.DATASET_PATH,
         batch_size=Config.BATCH_SIZE,
     )
 
     # Model
     model = get_model(Config.MODEL_NAME, num_classes=Config.NUM_CLASSES).to(device)
+    print(f"Model: {Config.MODEL_NAME}")
+    print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Loss
     criterion = LossFunctionFactory.create_loss_from_config(Config)
@@ -86,36 +87,25 @@ def main():
     )
     metrics_fn = BurnSeverityMetrics(num_classes=Config.NUM_CLASSES)
 
+    print(f"\nStarting training: {Config.MODEL_NAME} with {Config.LOSS_TYPE} loss")
+    
+    # Train model
     train_losses, val_losses, val_ious = trainer.fit(
         num_epochs=Config.NUM_EPOCHS,
         metrics_fn=metrics_fn,
-        csv_path=str(Config.TRAINING_LOG),  # Convert Path to string
+        csv_path=str(Config.TRAINING_LOG),
         config=Config
     )
 
-    # Load best model
-    ckpt_path = Config.SAVE_DIR / Config.BEST_MODEL_NAME
-    model.load_state_dict(torch.load(ckpt_path, map_location=device))
-    model.eval()
-
-    # Evaluate on test set
-    metrics = BurnSeverityMetrics(num_classes=Config.NUM_CLASSES)
-    with torch.no_grad():
-        for inputs, labels in test_loader:
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = model(inputs)
-            metrics.update(outputs, labels)
-
-    final_results = metrics.compute_all_metrics()
-    print("\nFinal Test Results:")
-    print(f"Overall Accuracy: {final_results['overall_accuracy']:.4f}")
-    print(f"Mean IoU: {final_results['mean_iou']:.4f}")
-    print(f"Mean Dice: {final_results['mean_dice']:.4f}")
-
-    # Plots
+    print(f"\nTraining completed!")
+    print(f"Best model saved at: {Config.SAVE_DIR / Config.BEST_MODEL_NAME}")
+    print(f"Training log saved at: {Config.TRAINING_LOG}")
+    
+    # Plot training curves
     plot_training_curves(train_losses, val_losses, val_ious)
-    plot_precision_recall(final_results, metrics.class_names)
-    plot_confusion_matrix(final_results["confusion_matrix_normalized"], metrics.class_names)
+
+    print(f"\nTo evaluate the trained model, run:")
+    print(f"python evaluate.py --model_path {Config.SAVE_DIR / Config.BEST_MODEL_NAME} --model_name {Config.MODEL_NAME} --save_plots --save_results")
 
 
 if __name__ == "__main__":

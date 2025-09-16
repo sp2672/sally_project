@@ -20,3 +20,7 @@ test_logs/
 # Large result files
 results/figures/*.png
 results/figures/*.jpg
+*.pth
+logs/
+checkpoints/
+*.ipynb

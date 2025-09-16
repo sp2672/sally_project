@@ -121,117 +121,65 @@ class Trainer:
         return val_loss, results
 
     def fit(self, num_epochs, metrics_fn, csv_path="training_log.csv", config=None):
-        """Enhanced training loop with comprehensive monitoring"""
+        """Simplified training loop with clean output"""
         # Convert csv_path to string if it's a Path object
         csv_path = str(csv_path)
         
-        # Validate config
-        if config is not None:
-            try:
-                config.validate()
-            except ValueError as e:
-                print(f"Configuration error: {e}")
-                return None, None, None
-        
-        # Log hyperparameters if CSV doesn't exist
+        # --- If CSV doesn't exist, log hyperparameters first ---
         if config is not None and not os.path.exists(csv_path):
             with open(csv_path, "w", newline="") as f:
                 import csv
                 writer = csv.writer(f)
                 writer.writerow(["# Hyperparameters"])
                 for key, value in vars(config).items():
-                    if not key.startswith("__"):
+                    if not key.startswith("__"):  # skip built-ins
                         writer.writerow([key, value])
-                writer.writerow([])
+                writer.writerow([])  # blank line before logs
                 writer.writerow([
-                    "epoch", "train_loss", "val_loss", "accuracy", "mean_iou", "mean_dice",
-                    "epoch_time", "gpu_memory_allocated", "gpu_memory_cached", "ram_usage_percent"
+                    "epoch", "train_loss", "val_loss",
+                    "accuracy", "mean_iou", "mean_dice"
                 ])
-
-        print(f"Starting training for {num_epochs} epochs...")
-        print(f"Device: {self.device}")
-        print(f"Train batches: {len(self.train_loader)}, Val batches: {len(self.val_loader)}")
         
-        start_time = time.time()
-
         for epoch in range(num_epochs):
-            epoch_start = time.time()
+            train_loss = self.train_one_epoch()
+            val_loss, val_results = self.validate_one_epoch(metrics_fn)
             
-            try:
-                print(f"\nEpoch {epoch+1}/{num_epochs}")
-                
-                # Training
-                train_loss = self.train_one_epoch()
-                
-                # Validation
-                val_loss, val_results = self.validate_one_epoch(metrics_fn)
-                
-                # Timing
-                epoch_time = time.time() - epoch_start
-                self.epoch_times.append(epoch_time)
-                
-                # System monitoring
-                system_info = self._log_system_info()
-                self.memory_usage.append(system_info)
-
-                # Store logs
-                self.train_losses.append(train_loss)
-                self.val_losses.append(val_loss)
-                self.val_ious.append(val_results["mean_iou"])
-
-                # Enhanced logging
-                log_entry = {
-                    "epoch": epoch + 1,
-                    "train_loss": train_loss,
-                    "val_loss": val_loss,
-                    "accuracy": val_results["overall_accuracy"],
-                    "mean_iou": val_results["mean_iou"],
-                    "mean_dice": val_results["mean_dice"],
-                    "epoch_time": epoch_time,
-                    **system_info
-                }
-                
-                # Add per-class metrics
-                for cls, val in val_results["class_precision"].items():
-                    log_entry[f"precision_{cls.replace(' ', '_')}"] = val
-                for cls, val in val_results["class_recall"].items():
-                    log_entry[f"recall_{cls.replace(' ', '_')}"] = val
-
-                log_metrics_to_csv(csv_path, log_entry)
-
-                # Enhanced console output
-                print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | "
-                      f"Val mIoU: {val_results['mean_iou']:.4f} | "
-                      f"Time: {epoch_time:.1f}s")
-                
-                if torch.cuda.is_available():
-                    print(f"GPU Memory: {system_info['gpu_memory_allocated']:.1f}GB allocated")
-
-                # Save best model
-                if val_results["mean_iou"] > self.best_miou:
-                    self.best_miou = val_results["mean_iou"]
-                    torch.save(self.model.state_dict(), self.ckpt_path)
-                    print(f">>> New best model saved! mIoU: {self.best_miou:.4f}")
-                    self.epochs_no_improve = 0
-                else:
-                    self.epochs_no_improve += 1
-                    if self.epochs_no_improve >= self.early_stop_patience:
-                        print(f"Early stopping triggered after {self.early_stop_patience} epochs without improvement")
-                        break
-                        
-            except Exception as e:
-                print(f"Error in epoch {epoch+1}: {e}")
-                import traceback
-                traceback.print_exc()
-                break
-
-        # Training summary
-        total_time = time.time() - start_time
-        avg_epoch_time = sum(self.epoch_times) / len(self.epoch_times) if self.epoch_times else 0
-        
-        print(f"\nTraining completed!")
-        print(f"Total time: {total_time/3600:.2f} hours")
-        print(f"Average epoch time: {avg_epoch_time:.1f}s")
-        print(f"Best mIoU: {self.best_miou:.4f}")
-
+            # Store logs
+            self.train_losses.append(train_loss)
+            self.val_losses.append(val_loss)
+            self.val_ious.append(val_results["mean_iou"])
+            
+            # Save metrics to CSV
+            log_entry = {
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "accuracy": val_results["overall_accuracy"],
+                "mean_iou": val_results["mean_iou"],
+                "mean_dice": val_results["mean_dice"],
+            }
+            log_metrics_to_csv(csv_path, log_entry)
+            
+            # --- Console print (clean summary) ---
+            print(
+                f"[Epoch {epoch+1}/{num_epochs}] "
+                f"Train Loss: {train_loss:.4f} | "
+                f"Val Loss: {val_loss:.4f} | "
+                f"Acc: {val_results['overall_accuracy']:.4f} | "
+                f"mIoU: {val_results['mean_iou']:.4f} | "
+                f"Dice: {val_results['mean_dice']:.4f}"
+            )
+            
+            # Save best model (based on mIoU)
+            if val_results["mean_iou"] > self.best_miou:
+                self.best_miou = val_results["mean_iou"]
+                torch.save(self.model.state_dict(), self.ckpt_path)
+                print(f"✅ Saved new best model at {self.ckpt_path} (mIoU={self.best_miou:.4f})")
+                self.epochs_no_improve = 0
+            else:
+                self.epochs_no_improve += 1
+                if self.epochs_no_improve >= self.early_stop_patience:
+                    print("⏹️ Early stopping triggered")
+                    break
+                    
         return self.train_losses, self.val_losses, self.val_ious
