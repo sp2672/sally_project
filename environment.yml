@@ -194,6 +194,7 @@ dependencies:
   - torchaudio=2.2.2=py39_cpu
   - torchvision=0.17.2=py39_cpu
   - tornado=6.5.1=py39h80987f9_0
+  - tqdm=4.67.1=py39h33ce5c2_0
   - traitlets=5.14.3=py39hca03da5_0
   - typing-extensions=4.15.0=py39hca03da5_0
   - typing_extensions=4.15.0=py39hca03da5_0
