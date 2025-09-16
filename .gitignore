@@ -1,0 +1,22 @@
+# Dataset (too large for Git)
+Landsat-BSA/
+*.pth
+*.pt
+*.ckpt
+
+# Python cache
+__pycache__/
+*.pyc
+
+# System files
+.DS_Store
+
+# Training outputs
+logs/
+saved_models/
+quick_test/
+test_logs/
+
+# Large result files
+results/figures/*.png
+results/figures/*.jpg
