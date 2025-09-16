@@ -24,3 +24,4 @@ results/figures/*.jpg
 logs/
 checkpoints/
 *.ipynb
+
