@@ -170,6 +170,17 @@ class Trainer:
                 f"mIoU: {val_results['mean_iou']:.4f} | "
                 f"Dice: {val_results['mean_dice']:.4f}"
             )
+
+            # per-class breakdown
+            print("Per-class IoU:", end=" ")
+            for cls, iou in val_results['class_iou'].items():
+                print(f"{cls}: {iou:.3f}", end=" | ")
+            print()
+
+            print("Per-class Precision:", end=" ")
+            for cls, prec in val_results['class_precision'].items():
+                print(f"{cls}: {prec:.3f}", end=" | ")
+            print()
             
             # Save best model (based on mIoU)
             if val_results["mean_iou"] > self.best_miou:
