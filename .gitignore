@@ -25,3 +25,4 @@ logs/
 checkpoints/
 *.ipynb
 
+*.txt

@@ -1,0 +1,22 @@
+name: burn_severity
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - scipy
+  - jupyter
+  - ipykernel
+  - ipywidgets
+  - pytorch=2.2.2
+  - torchvision=0.17.2
+  - torchaudio=2.2.2
+  - tqdm-4.67.1 
+  - pip:
+      - numpy==1.26.4   

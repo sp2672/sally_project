@@ -142,7 +142,7 @@ def save_results_to_file(results: dict, model_name: str, save_path: Path):
     with open(results_file, 'w') as f:
         f.write(f"TEST RESULTS - {model_name.upper()}\n")
         f.write("=" * 50 + "\n\n")
-        f.write(f"Overall Accuracy: {results['overall_accuracy']:.4f}\n")
+        f.write(f"Test Accuracy: {results['overall_accuracy']:.4f}\n")
         f.write(f"Mean IoU (mIoU):  {results['mean_iou']:.4f}\n")
         f.write(f"Mean Dice:        {results['mean_dice']:.4f}\n\n")
         
@@ -161,6 +161,7 @@ def save_results_to_file(results: dict, model_name: str, save_path: Path):
 
 
 def main():
+    # python evaluate.py --model_path logs/checkpoints/actualmodelname.pth --model_name unet --save_plots --save_results
     parser = argparse.ArgumentParser(description='Evaluate trained models on test set')
     parser.add_argument('--model_path', type=str, required=True, 
                         help='Path to trained model (.pth file)')
