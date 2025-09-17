@@ -67,6 +67,12 @@ class BurnSeverityDataset(Dataset):
         pre_fire = Image.open(os.path.join(self.pre_fire_path, sample_file))
         post_fire = Image.open(os.path.join(self.post_fire_path, sample_file))
         label = Image.open(os.path.join(self.label_path, sample_file))
+    	
+        #resize to 256 by 256
+        target_size = (256, 256)
+        pre_fire = pre_fire.resize(target_size, Image.BILINEAR)
+        post_fire = post_fire.resize(target_size, Image.BILINEAR)
+        label = label.resize(target_size, Image.NEAREST)  # Use NEAREST for labels to preserve class values
 
         # Convert to numpy arrays
         pre_fire_np = np.array(pre_fire, dtype=np.float32) / 255.0

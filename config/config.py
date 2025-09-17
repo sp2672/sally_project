@@ -24,7 +24,7 @@ class Config:
     OHEM_MIN_KEPT = 10000  # only OHEM
 
     MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
-    BATCH_SIZE = 16            # change ------ REMEMBER TO CHANGE ALWAYS
+    BATCH_SIZE = 4            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
     LR = 0.001                  #change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
