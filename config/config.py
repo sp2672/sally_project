@@ -16,30 +16,30 @@ class Config:
     IN_CHANNELS = 6
 
     # --- Training ---
-    LOSS_TYPE = "ce"   # options: "ce", "focal", "ohem", "combined"
+    LOSS_TYPE = "ce"   # options: "ce", "focal", "ohem", "combined" ------ REMEMBER TO CHANGE ALWAYS
     FOCAL_ALPHA = [0.1, 1.0, 2.0, 3.0, 2.0]  #only for focal
     FOCAL_GAMMA = 2.0                        #only for focal
  
     OHEM_THRESHOLD = 0.7   # only OHEM
     OHEM_MIN_KEPT = 10000  # only OHEM
 
-    MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet"
-    BATCH_SIZE = 2             # change
-    NUM_EPOCHS = 2             # change
-    LR = 1e-3                  #change
+    MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
+    BATCH_SIZE = 16            # change ------ REMEMBER TO CHANGE ALWAYS
+    NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
+    LR = 0.001                  #change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
-    OPTIMIZER = "adam"         # options: "adam", "sgd"
+    OPTIMIZER = "adam"         # options: "adam", "sgd" ------ REMEMBER TO CHANGE ALWAYS
     MOMENTUM = 0.9             # only used if OPTIMIZER="sgd"
 
     # --- Early stopping ---
-    EARLY_STOP_PATIENCE = 5  # change early stopping
+    EARLY_STOP_PATIENCE = 7  # change early stopping
 
     # --- Saving ---
     SAVE_DIR = Path("logs") / "checkpoints"         # saving training log
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    BEST_MODEL_NAME = "test_trainer_model.pth"            #change model name
-    BEST_MODEL_FULL = "test_trainer_model_full.pth"  #change full model
+    BEST_MODEL_NAME = "baseline_unet_model.pth"            #change model name ------ REMEMBER TO CHANGE ALWAYS
+    BEST_MODEL_FULL = "Baseline_unet_model_full.pth"  #change full model ------ REMEMBER TO CHANGE ALWAYS
 
     # --- Logging with timestamp ---
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

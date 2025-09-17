@@ -2,8 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import os
-from config.config import Config
 
+#importing system to get to config file
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root / "config"))
+sys.path.append(str(project_root / "config"))
+from config import Config
 
 def plot_training_curves(train_losses, val_losses, val_ious, save_dir=Config.SAVE_DIR):
     epochs = range(1, len(train_losses) + 1)

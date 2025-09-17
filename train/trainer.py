@@ -10,8 +10,9 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).parent.parent / "utils"))
 sys.path.append(str(Path(__file__).parent.parent / "config"))
 
+
 from train_utils import log_metrics_to_csv
-from config.config import Config
+from config import Config
 
 
 class Trainer:
@@ -154,7 +155,7 @@ class Trainer:
                 "epoch": epoch + 1,
                 "train_loss": train_loss,
                 "val_loss": val_loss,
-                "accuracy": val_results["overall_accuracy"],
+                "val_acc": val_results["overall_accuracy"],
                 "mean_iou": val_results["mean_iou"],
                 "mean_dice": val_results["mean_dice"],
             }
@@ -165,7 +166,7 @@ class Trainer:
                 f"[Epoch {epoch+1}/{num_epochs}] "
                 f"Train Loss: {train_loss:.4f} | "
                 f"Val Loss: {val_loss:.4f} | "
-                f"Acc: {val_results['overall_accuracy']:.4f} | "
+                f"Val Acc: {val_results['overall_accuracy']:.4f} | "
                 f"mIoU: {val_results['mean_iou']:.4f} | "
                 f"Dice: {val_results['mean_dice']:.4f}"
             )

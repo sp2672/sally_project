@@ -10,12 +10,13 @@ sys.path.append(str(project_root / "model_architecture"))
 sys.path.append(str(project_root / "metrics"))
 sys.path.append(str(project_root / "utils"))
 sys.path.append(str(project_root / "config"))
+sys.path.append(str(project_root / "train"))
 
 from dataloader import create_data_loaders
 from trainer import Trainer
-from utils.train_utils import plot_training_curves
-from metrics.evaluation_metrics import BurnSeverityMetrics
-from metrics.loss_functions import LossFunctionFactory
+from train_utils import plot_training_curves
+from evaluation_metrics import BurnSeverityMetrics
+from loss_functions import LossFunctionFactory
 
 # Import models
 from unet import UNet
@@ -23,8 +24,8 @@ from resUnet import ResUNet
 from attentionUnet import AttentionUNet
 
 # Config + seed
-from config.config import Config
-from utils.seed_utils import set_seed
+from config import Config
+from seed_utils import set_seed
 
 
 def get_model(name: str, num_classes: int):
