@@ -18,13 +18,13 @@ class BurnSeverityDataset(Dataset):
         split: str = "train",
         transform: Optional[torch.nn.Module] = None,
         augment: bool = False,
-        max_samples: Optional[int] = None,  # ADD THIS LINE
+        max_samples: Optional[int] = None,  
     ):
         self.dataset_path = dataset_path
         self.split = split
         self.transform = transform
         self.augment = augment and (split == "train")
-        self.max_samples = max_samples  # ADD THIS LINE
+        self.max_samples = max_samples  
 
         # Define split paths
         self.split_path = os.path.join(dataset_path, split)
@@ -36,7 +36,6 @@ class BurnSeverityDataset(Dataset):
         self.sample_files = sorted(os.listdir(self.pre_fire_path))
         self._verify_files()
         
-        # ADD THESE LINES:
         # Limit samples if specified
         if self.max_samples is not None:
             self.sample_files = self.sample_files[:self.max_samples]
@@ -127,7 +126,7 @@ class BurnSeverityDataset(Dataset):
 
 
 # ---------------- DataLoader Factory ----------------
-def create_data_loaders(dataset_path: str, batch_size: int = 16, num_workers: int = 4, 
+def create_data_loaders(dataset_path: str, batch_size: int = 16, num_workers: int = 0, 
                        max_samples: Optional[int] = None):  # ADD max_samples parameter
     train_dataset = BurnSeverityDataset(dataset_path, "train", augment=True, max_samples=max_samples)
     val_dataset = BurnSeverityDataset(dataset_path, "val", max_samples=max_samples//4 if max_samples else None)
