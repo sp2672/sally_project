@@ -28,7 +28,7 @@ class Trainer:
         self.early_stop_patience = early_stop_patience
 
         os.makedirs(save_dir, exist_ok=True)
-
+        
         # Tracking
         self.best_miou = 0.0
         self.epochs_no_improve = 0

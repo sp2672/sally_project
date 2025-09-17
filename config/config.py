@@ -16,17 +16,17 @@ class Config:
     IN_CHANNELS = 6
 
     # --- Training ---
-    LOSS_TYPE = "ce"   # options: "ce", "focal", "ohem", "combined" ------ REMEMBER TO CHANGE ALWAYS
-    FOCAL_ALPHA = [0.1, 1.0, 2.0, 3.0, 2.0]  #only for focal
-    FOCAL_GAMMA = 2.0                        #only for focal
+    LOSS_TYPE = "focal"   # options: "ce", "focal", "ohem", "combined" ------ REMEMBER TO CHANGE ALWAYS
+    FOCAL_ALPHA = [0.25, 2.0, 3.0, 4.0, 8.0]  # only for focal [0,1,2,3,4]
+    FOCAL_GAMMA = 3.0                        #aggresive as high severity is about 7% of the samples
  
     OHEM_THRESHOLD = 0.7   # only OHEM
     OHEM_MIN_KEPT = 10000  # only OHEM
 
     MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
-    BATCH_SIZE = 4            # change ------ REMEMBER TO CHANGE ALWAYS
+    BATCH_SIZE = 8            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
-    LR = 0.001                  #change ------ REMEMBER TO CHANGE ALWAYS
+    LR = 0.0001                  #change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
     OPTIMIZER = "adam"         # options: "adam", "sgd" ------ REMEMBER TO CHANGE ALWAYS
     MOMENTUM = 0.9             # only used if OPTIMIZER="sgd"
