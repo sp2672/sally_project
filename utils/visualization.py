@@ -290,46 +290,62 @@ def visualize_single_prediction(model, dataset, device, idx, alpha=0.5, save_dir
         label = labels[0].numpy()
         pred = prediction[0].numpy()
         
-        # Create figure
-        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-        fig.suptitle(f"Sample {idx} — {sample_file}", fontsize=14)
+        # Create figure with proper spacing for colorbar
+        fig = plt.figure(figsize=(12, 8))
+        gs = fig.add_gridspec(2, 4, width_ratios=[1, 1, 1, 0.1], hspace=0.3, wspace=0.05)
+        
+        fig.suptitle(f"Sample {idx} — {sample_file}", fontsize=12)
         
         # Top row: Input images and ground truth
-        axes[0, 0].imshow(pre_fire)
-        axes[0, 0].set_title("Pre-fire")
-        axes[0, 0].axis("off")
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.imshow(pre_fire)
+        ax1.set_title("Pre-fire", fontsize=10)
+        ax1.axis("off")
         
-        axes[0, 1].imshow(post_fire)
-        axes[0, 1].set_title("Post-fire")
-        axes[0, 1].axis("off")
+        ax2 = fig.add_subplot(gs[0, 1])
+        ax2.imshow(post_fire)
+        ax2.set_title("Post-fire", fontsize=10)
+        ax2.axis("off")
         
-        im1 = axes[0, 2].imshow(label, cmap=burn_cmap, vmin=0, vmax=4)
-        axes[0, 2].set_title("Ground Truth")
-        axes[0, 2].axis("off")
+        ax3 = fig.add_subplot(gs[0, 2])
+        im_gt = ax3.imshow(label, cmap=burn_cmap, vmin=0, vmax=4)
+        ax3.set_title("Ground Truth", fontsize=10)
+        ax3.axis("off")
         
         # Bottom row: Prediction, overlay, and confidence
-        im2 = axes[1, 0].imshow(pred, cmap=burn_cmap, vmin=0, vmax=4)
-        axes[1, 0].set_title("Model Prediction")
-        axes[1, 0].axis("off")
+        ax4 = fig.add_subplot(gs[1, 0])
+        ax4.imshow(pred, cmap=burn_cmap, vmin=0, vmax=4)
+        ax4.set_title("Model Prediction", fontsize=10)
+        ax4.axis("off")
         
         # Overlay with errors highlighted
         difference = (label != pred)
-        axes[1, 1].imshow(post_fire)
-        axes[1, 1].imshow(pred, cmap=burn_cmap, alpha=alpha, vmin=0, vmax=4)
-        axes[1, 1].imshow(difference, cmap='Reds', alpha=0.7)
-        axes[1, 1].set_title("Prediction Overlay + Errors")
-        axes[1, 1].axis("off")
+        ax5 = fig.add_subplot(gs[1, 1])
+        ax5.imshow(post_fire)
+        ax5.imshow(pred, cmap=burn_cmap, alpha=alpha, vmin=0, vmax=4)
+        ax5.imshow(difference, cmap='Reds', alpha=0.7)
+        ax5.set_title("Overlay + Errors", fontsize=10)
+        ax5.axis("off")
         
-        # Confidence map (max probability across classes)
+        # Confidence map
         max_conf = torch.max(probabilities[0], dim=0)[0].numpy()
-        im3 = axes[1, 2].imshow(max_conf, cmap='viridis', vmin=0, vmax=1)
-        axes[1, 2].set_title("Prediction Confidence")
-        axes[1, 2].axis("off")
-        plt.colorbar(im3, ax=axes[1, 2], fraction=0.046, pad=0.04)
+        ax6 = fig.add_subplot(gs[1, 2])
+        im_conf = ax6.imshow(max_conf, cmap='viridis', vmin=0, vmax=1)
+        ax6.set_title("Confidence", fontsize=10)
+        ax6.axis("off")
         
-        # Add main colorbar
-        plt.colorbar(im1, ax=axes[:, :2].ravel().tolist(), fraction=0.046, pad=0.04, 
-                    ticks=range(5), label='Burn Severity Classes')
+        # Add colorbars on the right
+        # Burn severity colorbar
+        cbar_ax1 = fig.add_subplot(gs[0, 3])
+        cbar1 = plt.colorbar(im_gt, cax=cbar_ax1, ticks=range(5))
+        cbar1.set_ticklabels(class_names, fontsize=8)
+        cbar1.ax.tick_params(labelsize=8)
+        
+        # Confidence colorbar
+        cbar_ax2 = fig.add_subplot(gs[1, 3])
+        cbar2 = plt.colorbar(im_conf, cax=cbar_ax2)
+        cbar2.set_label('Confidence', fontsize=8)
+        cbar2.ax.tick_params(labelsize=8)
         
         # Calculate and display metrics
         accuracy = np.mean(label == pred) * 100
@@ -339,17 +355,14 @@ def visualize_single_prediction(model, dataset, device, idx, alpha=0.5, save_dir
         gt_dist = {class_names[l]: (c / label.size) * 100 for l, c in zip(unique_gt, counts_gt)}
         pred_dist = {class_names[l]: (c / pred.size) * 100 for l, c in zip(unique_pred, counts_pred)}
         
-        # Add text summary
-        text_summary = f"Pixel Accuracy: {accuracy:.1f}%\n"
-        text_summary += f"Mean Confidence: {max_conf.mean():.3f}\n\n"
-        text_summary += "Ground Truth Distribution:\n"
+        # Add text summary in bottom left
+        text_summary = f"Accuracy: {accuracy:.1f}%\nMean Conf: {max_conf.mean():.3f}\n\nGround Truth:\n"
         for cls, pct in gt_dist.items():
-            text_summary += f"  {cls}: {pct:.1f}%\n"
+            if pct > 0.1:  # Only show classes with >0.1%
+                text_summary += f"{cls[:8]}: {pct:.1f}%\n"
         
-        fig.text(0.02, 0.02, text_summary, fontsize=9, verticalalignment='bottom',
-                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8))
-        
-        plt.tight_layout()
+        fig.text(0.02, 0.02, text_summary, fontsize=8, verticalalignment='bottom',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9))
         
         if save_dir is not None:
             os.makedirs(save_dir, exist_ok=True)
