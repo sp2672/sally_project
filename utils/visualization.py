@@ -166,7 +166,7 @@ def show_sample_by_index(dataset, idx: int, alpha: float = 0.5):
 
     
 
-    def visualize_model_predictions(model, data_loader, device, num_samples=4, alpha=0.5, save_dir=None, prefix="predictions"):
+def visualize_model_predictions(model, data_loader, device, num_samples=4, alpha=0.5, save_dir=None, prefix="predictions"):
         """
         Visualize model predictions against ground truth labels with input images.
         Shows: Pre-fire, Post-fire, Ground Truth Labels, Model Predictions, and Difference Map
@@ -257,7 +257,7 @@ def show_sample_by_index(dataset, idx: int, alpha: float = 0.5):
         plt.show()
 
 
-    def visualize_single_prediction(model, dataset, device, idx, alpha=0.5, save_dir=None):
+def visualize_single_prediction(model, dataset, device, idx, alpha=0.5, save_dir=None):
         """
         Visualize a single sample prediction with detailed analysis.
         """
