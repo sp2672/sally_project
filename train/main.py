@@ -78,13 +78,26 @@ def main():
         )
     else:
         raise ValueError(f"Unsupported OPTIMIZER: {Config.OPTIMIZER}")
+    
+    # Reducing the LR when a plateau is hit
+    if Config.USE_LR_SCHEDULER:
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, 
+            mode='max',  # Maximize mIoU
+            factor=Config.LR_REDUCE_FACTOR,
+            patience=Config.LR_REDUCE_PATIENCE,
+            threshold=Config.LR_REDUCE_THRESHOLD,
+            min_lr=Config.LR_MIN,
+            verbose=True
+        )
 
     # Trainer
     trainer = Trainer(
         model, train_loader, val_loader,
         criterion, optimizer, device,
         save_dir=Config.SAVE_DIR,
-        early_stop_patience=Config.EARLY_STOP_PATIENCE
+        early_stop_patience=Config.EARLY_STOP_PATIENCE,
+        scheduler = scheduler
     )
     metrics_fn = BurnSeverityMetrics(num_classes=Config.NUM_CLASSES)
 

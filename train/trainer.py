@@ -17,12 +17,14 @@ from config import Config
 
 class Trainer:
     def __init__(self, model, train_loader, val_loader, criterion, optimizer, device,
-                 save_dir=Config.SAVE_DIR, early_stop_patience=Config.EARLY_STOP_PATIENCE):
+                 save_dir=Config.SAVE_DIR, early_stop_patience=Config.EARLY_STOP_PATIENCE,
+                 scheduler=None):
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler  # Add scheduler
         self.device = device
         self.save_dir = save_dir
         self.early_stop_patience = early_stop_patience
@@ -122,7 +124,7 @@ class Trainer:
         return val_loss, results
 
     def fit(self, num_epochs, metrics_fn, csv_path="training_log.csv", config=None):
-        """Simplified training loop with clean output"""
+        """Training loop with learning rate scheduling"""
         # Convert csv_path to string if it's a Path object
         csv_path = str(csv_path)
         
@@ -138,7 +140,7 @@ class Trainer:
                 writer.writerow([])  # blank line before logs
                 writer.writerow([
                     "epoch", "train_loss", "val_loss",
-                    "accuracy", "mean_iou", "mean_dice"
+                    "accuracy", "mean_iou", "mean_dice", "learning_rate"
                 ])
         
         for epoch in range(num_epochs):
@@ -150,6 +152,9 @@ class Trainer:
             self.val_losses.append(val_loss)
             self.val_ious.append(val_results["mean_iou"])
             
+            # Get current learning rate for logging
+            current_lr = self.optimizer.param_groups[0]['lr']
+            
             # Save metrics to CSV
             log_entry = {
                 "epoch": epoch + 1,
@@ -158,6 +163,7 @@ class Trainer:
                 "val_acc": val_results["overall_accuracy"],
                 "mean_iou": val_results["mean_iou"],
                 "mean_dice": val_results["mean_dice"],
+                "learning_rate": current_lr
             }
             log_metrics_to_csv(csv_path, log_entry)
             
@@ -168,7 +174,8 @@ class Trainer:
                 f"Val Loss: {val_loss:.4f} | "
                 f"Val Acc: {val_results['overall_accuracy']:.4f} | "
                 f"mIoU: {val_results['mean_iou']:.4f} | "
-                f"Dice: {val_results['mean_dice']:.4f}"
+                f"Dice: {val_results['mean_dice']:.4f} | "
+                f"LR: {current_lr:.2e}"
             )
 
             # per-class breakdown
@@ -181,6 +188,14 @@ class Trainer:
             for cls, prec in val_results['class_precision'].items():
                 print(f"{cls}: {prec:.3f}", end=" | ")
             print()
+            
+            # Learning rate scheduling step
+            if self.scheduler is not None:
+                old_lr = current_lr
+                self.scheduler.step(val_results["mean_iou"])
+                new_lr = self.optimizer.param_groups[0]['lr']
+                if new_lr != old_lr:
+                    print(f"🔻 Learning rate reduced: {old_lr:.2e} → {new_lr:.2e}")
             
             # Save best model (based on mIoU)
             if val_results["mean_iou"] > self.best_miou:

@@ -4,18 +4,21 @@ from datetime import datetime
 
 
 class Config:
-    # --- Reproducibility ---
+    # --- Reproducibility ------------------------------------------------------------------------------------#
     SEED = 42
 
-    # --- Device ---
+    # --- Device ------------------------------------------------------------------------------------#
+    # ensuring GPU usage 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # --- Dataset ---
+    # --- Dataset ------------------------------------------------------------------------------------#
     DATASET_PATH = str(Path.home() / "Desktop" / "Landsat-BSA")
     NUM_CLASSES = 5
     IN_CHANNELS = 6
 
-    # --- Training ---
+    # --- Training Parameters---------------------------------------------------------------------------------#
+
+    #--- Loss Functions -----
     LOSS_TYPE = "focal"   # options: "ce", "focal", "ohem", "combined" ------ REMEMBER TO CHANGE ALWAYS
     FOCAL_ALPHA = [0.25, 2.0, 3.0, 4.0, 8.0]  # only for focal [0,1,2,3,4]
     FOCAL_GAMMA = 3.0                        #aggresive as high severity is about 7% of the samples
@@ -26,20 +29,32 @@ class Config:
     MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
     BATCH_SIZE = 8            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
-    LR = 0.0001                  #change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
     OPTIMIZER = "adam"         # options: "adam", "sgd" ------ REMEMBER TO CHANGE ALWAYS
     MOMENTUM = 0.9             # only used if OPTIMIZER="sgd"
-
+    
+    # --- Learning Rate Scheduling ---
+    LR = 0.0001  # Initial learning rate
+    USE_LR_SCHEDULER = True
+    LR_SCHEDULER_TYPE = "reduce_on_plateau"  # options: "reduce_on_plateau", "cosine", "step"
+    
+    # ReduceLROnPlateau parameters
+    LR_REDUCE_FACTOR = 0.5      # Multiply LR by this when plateau detected
+    LR_REDUCE_PATIENCE = 5      # Epochs to wait before reducing LR
+    LR_REDUCE_THRESHOLD = 0.01  # Minimum improvement to count as progress
+    LR_MIN = 1e-6              # Minimum learning rate
+    
+    
     # --- Early stopping ---
-    EARLY_STOP_PATIENCE = 7  # change early stopping
+    EARLY_STOP_PATIENCE = 10  # change early stopping
 
-    # --- Saving ---
+    # --- Saving ------------------------------------------------------------------------------------#
     SAVE_DIR = Path("logs") / "checkpoints"         # saving training log
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
-
-    BEST_MODEL_NAME = "baseline_unet_model.pth"            #change model name ------ REMEMBER TO CHANGE ALWAYS
-    BEST_MODEL_FULL = "Baseline_unet_model_full.pth"  #change full model ------ REMEMBER TO CHANGE ALWAYS
+    
+    # --- CHANGE MODEL NAME - DO NOT OVERWRITE ------------------------------------------------------------------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+    BEST_MODEL_NAME = "RLRonPlateau_run2_unet_model.pth"            #change model name ------ REMEMBER TO CHANGE ALWAYS
+    BEST_MODEL_FULL = "RLRonPlateau_run2_unet_model_full.pth"  #change full model ------ REMEMBER TO CHANGE ALWAYS
 
     # --- Logging with timestamp ---
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
