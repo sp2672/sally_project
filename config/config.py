@@ -26,8 +26,8 @@ class Config:
     OHEM_THRESHOLD = 0.7   # only OHEM
     OHEM_MIN_KEPT = 10000  # only OHEM
 
-    MODEL_NAME = "unet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
-    BATCH_SIZE = 8            # change ------ REMEMBER TO CHANGE ALWAYS
+    MODEL_NAME = "resunet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
+    BATCH_SIZE = 6            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
     OPTIMIZER = "adam"         # options: "adam", "sgd" ------ REMEMBER TO CHANGE ALWAYS
@@ -53,8 +53,8 @@ class Config:
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
     
     # --- CHANGE MODEL NAME - DO NOT OVERWRITE ------------------------------------------------------------------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
-    BEST_MODEL_NAME = "RLRonPlateau_run2_unet_model.pth"            #change model name ------ REMEMBER TO CHANGE ALWAYS
-    BEST_MODEL_FULL = "RLRonPlateau_run2_unet_model_full.pth"  #change full model ------ REMEMBER TO CHANGE ALWAYS
+    BEST_MODEL_NAME = "baseline_resunet_model.pth"            #change model name ------ REMEMBER TO CHANGE ALWAYS
+    BEST_MODEL_FULL = "baseline_resunet_model_full.pth"  #change full model ------ REMEMBER TO CHANGE ALWAYS
 
     # --- Logging with timestamp ---
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
