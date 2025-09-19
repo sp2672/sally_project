@@ -2,6 +2,7 @@ name: burn_severity
 channels:
   - pytorch
   - nvidia
+  - conda-forge
   - defaults
 dependencies:
   - python=3.9
@@ -16,9 +17,11 @@ dependencies:
   - ipykernel
   - ipywidgets
   - tqdm=4.67.1
-  - pytorch=*=*cuda*
-  - torchvision=*=*cuda*
-  - torchaudio=*=*cuda*
   - pytorch-cuda=12.1
+  - pytorch
+  - torchvision
+  - torchaudio
+  - psutil
+  - pillow
   - pip:
       - numpy==1.26.4
