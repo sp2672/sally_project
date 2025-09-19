@@ -12,7 +12,7 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # --- Dataset ------------------------------------------------------------------------------------#
-    DATASET_PATH = str(Path.home() / "Desktop" / "Landsat-BSA")
+    DATASET_PATH = str(Path("C:/Users/spet447/OneDrive - The University of Auckland/Desktop/Landsat-BSA"))
     NUM_CLASSES = 5
     IN_CHANNELS = 6
 
