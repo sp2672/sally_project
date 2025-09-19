@@ -27,7 +27,7 @@ class Config:
     OHEM_MIN_KEPT = 10000  # only OHEM
 
     MODEL_NAME = "resunet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
-    BATCH_SIZE = 6            # change ------ REMEMBER TO CHANGE ALWAYS
+    BATCH_SIZE = 8            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
     WEIGHT_DECAY = 1e-5     #--
     OPTIMIZER = "adam"         # options: "adam", "sgd" ------ REMEMBER TO CHANGE ALWAYS
