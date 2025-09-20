@@ -132,7 +132,7 @@ class BurnSeverityDataset(Dataset):
 
 
 # ---------------- DataLoader Factory ----------------
-def create_data_loaders(dataset_path: str, batch_size: int = 16, num_workers: int = 4, 
+def create_data_loaders(dataset_path: str, batch_size: int = 16, num_workers: int = 0, 
                        max_samples: Optional[int] = None):  # ADD max_samples parameter
     train_dataset = BurnSeverityDataset(dataset_path, "train", augment=True, max_samples=max_samples)
     val_dataset = BurnSeverityDataset(dataset_path, "val", max_samples=max_samples//4 if max_samples else None)
