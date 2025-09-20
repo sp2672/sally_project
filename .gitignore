@@ -23,6 +23,7 @@ results/figures/*.jpg
 *.pth
 logs/
 checkpoints/
+*.ipynb
 
 *.txt
 *.png
