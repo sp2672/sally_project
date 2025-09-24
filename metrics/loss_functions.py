@@ -5,6 +5,7 @@ import numpy as np
 from typing import Optional, List
 import sys
 from pathlib import Path
+from scipy import ndimage
 sys.path.append(str(Path(__file__).parent.parent / "config"))
 
 
@@ -159,6 +160,72 @@ class CombinedLoss(nn.Module):
         for loss_fn, weight in zip(self.losses, self.weights):
             total_loss += weight * loss_fn(predictions, targets)
         return total_loss
+    
+
+class BoundaryLoss(nn.Module):
+    """
+    Boundary Loss for semantic segmentation
+    
+    Focuses on boundaries between classes by using distance transforms
+    to weight the loss based on pixel distance to class boundaries.
+    """
+    
+    def __init__(self, theta0: float = 3, theta: float = 5):
+        """
+        Args:
+            theta0: Lower bound for distance transform
+            theta: Upper bound for distance transform  
+        """
+        super(BoundaryLoss, self).__init__()
+        self.theta0 = theta0
+        self.theta = theta
+    
+    def compute_sdf(self, seg_mask: torch.Tensor) -> torch.Tensor:
+        """
+        Compute signed distance function from boundaries
+        
+        Args:
+            seg_mask: One-hot encoded segmentation mask (batch_size, n_classes, H, W)
+            
+        Returns:
+            Signed distance function tensor
+        """
+        # Convert to numpy for distance transform
+        seg_np = seg_mask.cpu().numpy()
+        sdf = np.zeros_like(seg_np, dtype=np.float32)
+        
+        for b in range(seg_np.shape[0]):  # batch
+            for c in range(seg_np.shape[1]):  # classes
+                # Positive distance inside, negative outside
+                posmask = seg_np[b, c].astype(bool)
+                if posmask.any():
+                    negmask = ~posmask
+                    sdf[b, c] = ndimage.distance_transform_edt(posmask) * posmask.astype(np.float32) - \
+                               (ndimage.distance_transform_edt(negmask) - 1) * negmask.astype(np.float32)
+        
+        return torch.tensor(sdf, device=seg_mask.device)
+    
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            predictions: Model predictions (batch_size, n_classes, H, W)
+            targets: Ground truth labels (batch_size, H, W)
+        """
+        # Convert targets to one-hot
+        num_classes = predictions.shape[1]
+        gt_one_hot = F.one_hot(targets, num_classes=num_classes).permute(0, 3, 1, 2).float()
+        
+        # Compute signed distance function
+        gt_sdf = self.compute_sdf(gt_one_hot)
+        
+        # Apply softmax to predictions
+        pred_softmax = F.softmax(predictions, dim=1)
+        
+        # Boundary loss computation
+        multipled = pred_softmax * gt_sdf
+        loss = multipled.mean()
+        
+        return loss
 
 
 class LossFunctionFactory:
@@ -193,6 +260,28 @@ class LossFunctionFactory:
             weight = kwargs.get('weight', None)
             return OHEMLoss(threshold=threshold, min_kept=min_kept, weight=weight)
         
+        elif loss_type == "boundary":
+            theta0 = kwargs.get('theta0', 3)
+            theta = kwargs.get('theta', 5)
+            return BoundaryLoss(theta0=theta0, theta=theta)
+        
+        elif loss_type == "ohem_boundary":
+            # Create OHEM + Boundary combination
+            ohem_loss = OHEMLoss(
+                threshold=kwargs.get('threshold', 0.7),
+                min_kept=kwargs.get('min_kept', 10000),
+                weight=kwargs.get('weight', None)
+            )
+            boundary_loss = BoundaryLoss(
+                theta0=kwargs.get('theta0', 3),
+                theta=kwargs.get('theta', 5)
+            )
+            boundary_weight = kwargs.get('boundary_weight', 0.1)
+            return CombinedLoss(
+                losses=[ohem_loss, boundary_loss],
+                weights=[1.0, boundary_weight]
+            )
+        
         elif loss_type == "combined":
             losses = kwargs.get('losses', [])
             weights = kwargs.get('weights', [])
@@ -200,7 +289,7 @@ class LossFunctionFactory:
         
         else:
             raise ValueError(f"Unknown loss type: {loss_type}. "
-                           f"Available types: 'ce', 'focal', 'ohem', 'combined'")
+                           f"Available types: 'ce', 'focal', 'ohem', 'boundary', 'ohem_boundary', 'combined'")
     
     @staticmethod
     def create_loss_from_config(config) -> nn.Module:
@@ -233,8 +322,34 @@ class LossFunctionFactory:
         
         elif loss_type == "ohem":
             threshold = config.OHEM_THRESHOLD
+            min_kept = config.OHEM_MIN_KEPT
             weight = config.get_class_weights()
-            return OHEMLoss(threshold=threshold, weight=weight)
+            return OHEMLoss(threshold=threshold, min_kept=min_kept, weight=weight)
+        
+        elif loss_type == "boundary":
+            theta0 = config.BOUNDARY_THETA0
+            theta = config.BOUNDARY_THETA
+            return BoundaryLoss(theta0=theta0, theta=theta)
+        
+        elif loss_type == "ohem_boundary":
+            # Create OHEM + Boundary combination
+            ohem_loss = OHEMLoss(
+                threshold=config.OHEM_THRESHOLD,
+                min_kept=config.OHEM_MIN_KEPT,
+                weight=config.get_class_weights()
+            )
+            boundary_loss = BoundaryLoss(
+                theta0=config.BOUNDARY_THETA0,
+                theta=config.BOUNDARY_THETA
+            )
+            return CombinedLoss(
+                losses=[ohem_loss, boundary_loss],
+                weights=[1.0, config.BOUNDARY_WEIGHT]
+            )
+        
+        elif loss_type == "combined":
+            # For custom combinations - would need more config parameters
+            raise NotImplementedError("Combined loss requires manual configuration")
         
         else:
             raise ValueError(f"Unsupported loss type in config: {loss_type}")

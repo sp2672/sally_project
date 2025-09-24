@@ -26,6 +26,11 @@ class Config:
     OHEM_THRESHOLD = 0.7   # only OHEM
     OHEM_MIN_KEPT = 10000  # only OHEM
 
+    # --- Boundary Loss Parameters ---
+    BOUNDARY_THETA0 = 3    # Lower bound for distance transform
+    BOUNDARY_THETA = 5     # Upper bound for distance transform
+    BOUNDARY_WEIGHT = 0.01  # Weight for boundary loss in combination (start small)
+
     MODEL_NAME = "resunet"        # options: "unet", "resunet", "attentionunet" ------ REMEMBER TO CHANGE ALWAYS
     BATCH_SIZE = 8            # change ------ REMEMBER TO CHANGE ALWAYS
     NUM_EPOCHS = 50             # change ------ REMEMBER TO CHANGE ALWAYS
@@ -89,7 +94,7 @@ class Config:
         if cls.MODEL_NAME.lower() not in valid_models:
             errors.append(f"MODEL_NAME must be one of {valid_models}, got {cls.MODEL_NAME}")
             
-        valid_losses = ["ce", "focal", "ohem", "combined"]
+        valid_losses = ["ce", "focal", "ohem", "boundary", "ohem_boundary","combined"]
         if cls.LOSS_TYPE.lower() not in valid_losses:
             errors.append(f"LOSS_TYPE must be one of {valid_losses}, got {cls.LOSS_TYPE}")
             
